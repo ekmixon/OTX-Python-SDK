@@ -30,7 +30,7 @@ if args['ip']:
     alerts = get_malicious.ip(otx, args['ip'])
     if len(alerts) > 0:
         print('Identified as potentially malicious')
-        print(str(alerts))
+        print(alerts)
     else:
         print('Unknown or not identified as malicious')
 
@@ -38,7 +38,7 @@ if args['host']:
     alerts = get_malicious.hostname(otx, args['host'])
     if len(alerts) > 0:
         print('Identified as potentially malicious')
-        print(str(alerts))
+        print(alerts)
     else:
         print('Unknown or not identified as malicious')
 
@@ -46,7 +46,7 @@ if args['url']:
     alerts = get_malicious.url(otx, args['url'])
     if len(alerts) > 0:
         print('Identified as potentially malicious')
-        print(str(alerts))
+        print(alerts)
     else:
         print('Unknown or not identified as malicious')
 
@@ -54,7 +54,7 @@ if args['hash']:
     alerts =  get_malicious.file(otx, args['hash'])
     if len(alerts) > 0:
         print('Identified as potentially malicious')
-        print(str(alerts))
+        print(alerts)
     else:
         print('Unknown or not identified as malicious')
 
@@ -64,7 +64,7 @@ if args['file']:
     alerts =  get_malicious.file(otx, hash)
     if len(alerts) > 0:
         print('Identified as potentially malicious')
-        print(str(alerts))
+        print(alerts)
     else:
         print('Unknown or not identified as malicious')
 

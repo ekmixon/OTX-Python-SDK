@@ -30,23 +30,33 @@ parser.add_argument('-s', '--subscribed', help='Get pulses you are subscribed to
 args = vars(parser.parse_args())
 
 if args["ip"]:
-    print (str(otx.get_indicator_details_full(IndicatorTypes.IPv4, args["ip"])))
+    print(otx.get_indicator_details_full(IndicatorTypes.IPv4, args["ip"]))
 
 if args["domain"]:
-    print (str(otx.get_indicator_details_full(IndicatorTypes.DOMAIN, args["domain"])))
+    print(otx.get_indicator_details_full(IndicatorTypes.DOMAIN, args["domain"]))
 
 if args["hostname"]:
-    print (str(otx.get_indicator_details_full(IndicatorTypes.HOSTNAME, args["hostname"])))
+    print(
+        otx.get_indicator_details_full(
+            IndicatorTypes.HOSTNAME, args["hostname"]
+        )
+    )
+
 
 if args["url"]:
-    print (str(otx.get_indicator_details_full(IndicatorTypes.URL, args["url"])))
+    print(otx.get_indicator_details_full(IndicatorTypes.URL, args["url"]))
 
 if args["md5"]:
-    print (str(otx.get_indicator_details_full(IndicatorTypes.FILE_HASH_MD5, args["md5"])))
+    print(
+        otx.get_indicator_details_full(
+            IndicatorTypes.FILE_HASH_MD5, args["md5"]
+        )
+    )
+
 
 if args["pulse"]:
     result = otx.search_pulses(args["pulse"])
-    print (str(result.get('results')))
+    print(result.get('results'))
 
 if args["subscribed"]:
-    print (str(otx.getall(max_items=3, limit=5)))
+    print(otx.getall(max_items=3, limit=5))

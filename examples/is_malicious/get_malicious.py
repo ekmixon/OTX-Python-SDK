@@ -4,21 +4,17 @@ import IndicatorTypes
 
 # Get a nested key from a dict, without having to do loads of ifs
 def getValue(results, keys):
-    if type(keys) is list and len(keys) > 0:
-
-        if type(results) is dict:
-            key = keys.pop(0)
-            if key in results:
-                return getValue(results[key], keys)
-            else:
-                return None
-        else:
-            if type(results) is list and len(results) > 0:
-                return getValue(results[0], keys)
-            else:
-                return results
-    else:
+    if type(keys) is not list or len(keys) <= 0:
         return results
+    if type(results) is not dict:
+        return (
+            getValue(results[0], keys)
+            if type(results) is list and len(results) > 0
+            else results
+        )
+
+    key = keys.pop(0)
+    return getValue(results[key], keys) if key in results else None
 
 def hostname(otx, hostname):
     alerts = []
@@ -27,22 +23,23 @@ def hostname(otx, hostname):
     # Return nothing if it's in the whitelist
     validation = getValue(result, ['validation'])
     if not validation:
-        pulses = getValue(result, ['pulse_info', 'pulses'])
-        if pulses:
-            for pulse in pulses:
-                if 'name' in pulse:
-                    alerts.append('In pulse: ' + pulse['name'])
+        if pulses := getValue(result, ['pulse_info', 'pulses']):
+            alerts.extend(
+                'In pulse: ' + pulse['name']
+                for pulse in pulses
+                if 'name' in pulse
+            )
 
     result = otx.get_indicator_details_by_section(IndicatorTypes.DOMAIN, hostname, 'general')
     # Return nothing if it's in the whitelist
     validation = getValue(result, ['validation'])
     if not validation:
-        pulses = getValue(result, ['pulse_info', 'pulses'])
-        if pulses:
-            for pulse in pulses:
-                if 'name' in pulse:
-                    alerts.append('In pulse: ' + pulse['name'])
-
+        if pulses := getValue(result, ['pulse_info', 'pulses']):
+            alerts.extend(
+                'In pulse: ' + pulse['name']
+                for pulse in pulses
+                if 'name' in pulse
+            )
 
     return alerts
 
@@ -54,11 +51,12 @@ def ip(otx, ip):
     # Return nothing if it's in the whitelist
     validation = getValue(result, ['validation'])
     if not validation:
-        pulses = getValue(result, ['pulse_info', 'pulses'])
-        if pulses:
-            for pulse in pulses:
-                if 'name' in pulse:
-                    alerts.append('In pulse: ' + pulse['name'])
+        if pulses := getValue(result, ['pulse_info', 'pulses']):
+            alerts.extend(
+                'In pulse: ' + pulse['name']
+                for pulse in pulses
+                if 'name' in pulse
+            )
 
     return alerts
 
@@ -73,23 +71,25 @@ def url(otx, url):
         alerts.append({'google_safebrowsing': 'malicious'})
 
 
-    clamav = getValue( result, ['url_list', 'url_list', 'result', 'multiav','matches','clamav'])
-    if clamav:
-            alerts.append({'clamav': clamav})
+    if clamav := getValue(
+        result,
+        ['url_list', 'url_list', 'result', 'multiav', 'matches', 'clamav'],
+    ):
+        alerts.append({'clamav': clamav})
 
-    avast = getValue( result, ['url_list', 'url_list', 'result', 'multiav','matches','avast'])
-    if avast:
+    if avast := getValue(
+        result,
+        ['url_list', 'url_list', 'result', 'multiav', 'matches', 'avast'],
+    ):
         alerts.append({'avast': avast})
 
-    # Get the file analysis too, if it exists
-    has_analysis = getValue( result,  ['url_list','url_list', 'result', 'urlworker', 'has_file_analysis'])
-    if has_analysis:
+    if has_analysis := getValue(
+        result,
+        ['url_list', 'url_list', 'result', 'urlworker', 'has_file_analysis'],
+    ):
         hash = getValue( result,  ['url_list','url_list', 'result', 'urlworker', 'sha256'])
-        file_alerts = file(otx, hash)
-        if file_alerts:
-            for alert in file_alerts:
-                alerts.append(alert)
-
+        if file_alerts := file(otx, hash):
+            alerts.extend(iter(file_alerts))
     # Todo: Check file page
 
     return alerts
@@ -106,28 +106,70 @@ def file(otx, hash):
 
     result = otx.get_indicator_details_full(hash_type, hash)
 
-    avg = getValue( result, ['analysis','analysis','plugins','avg','results','detection'])
-    if avg:
+    if avg := getValue(
+        result,
+        ['analysis', 'analysis', 'plugins', 'avg', 'results', 'detection'],
+    ):
         alerts.append({'avg': avg})
 
-    clamav = getValue( result, ['analysis','analysis','plugins','clamav','results','detection'])
-    if clamav:
+    if clamav := getValue(
+        result,
+        ['analysis', 'analysis', 'plugins', 'clamav', 'results', 'detection'],
+    ):
         alerts.append({'clamav': clamav})
 
-    avast = getValue( result, ['analysis','analysis','plugins','avast','results','detection'])
-    if avast:
+    if avast := getValue(
+        result,
+        ['analysis', 'analysis', 'plugins', 'avast', 'results', 'detection'],
+    ):
         alerts.append({'avast': avast})
 
-    microsoft = getValue( result, ['analysis','analysis','plugins','cuckoo','result','virustotal','scans','Microsoft','result'])
-    if microsoft:
+    if microsoft := getValue(
+        result,
+        [
+            'analysis',
+            'analysis',
+            'plugins',
+            'cuckoo',
+            'result',
+            'virustotal',
+            'scans',
+            'Microsoft',
+            'result',
+        ],
+    ):
         alerts.append({'microsoft': microsoft})
 
-    symantec = getValue( result, ['analysis','analysis','plugins','cuckoo','result','virustotal','scans','Symantec','result'])
-    if symantec:
+    if symantec := getValue(
+        result,
+        [
+            'analysis',
+            'analysis',
+            'plugins',
+            'cuckoo',
+            'result',
+            'virustotal',
+            'scans',
+            'Symantec',
+            'result',
+        ],
+    ):
         alerts.append({'symantec': symantec})
 
-    kaspersky = getValue( result, ['analysis','analysis','plugins','cuckoo','result','virustotal','scans','Kaspersky','result'])
-    if kaspersky:
+    if kaspersky := getValue(
+        result,
+        [
+            'analysis',
+            'analysis',
+            'plugins',
+            'cuckoo',
+            'result',
+            'virustotal',
+            'scans',
+            'Kaspersky',
+            'result',
+        ],
+    ):
         alerts.append({'kaspersky': kaspersky})
 
     suricata = getValue( result, ['analysis','analysis','plugins','cuckoo','result','suricata','rules','name'])

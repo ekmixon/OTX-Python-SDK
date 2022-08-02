@@ -30,11 +30,11 @@ def valid_ip(ip, otx):
         socket.inet_aton(ip)
         return True
     except Exception as e:
-        print(str(e))
+        print(e)
         return False
 
 # Here we download and parse the feed
-print('Downloading feed from ' + feed_url)
+print(f'Downloading feed from {feed_url}')
 new_indicators = []
 data = urllib2.urlopen(feed_url)
 for line in data.readlines():
@@ -42,11 +42,11 @@ for line in data.readlines():
         ip = line.strip()
         # Is it a valid IP?
         if valid_ip(ip, otx):
-            print('Will add ' + ip)
+            print(f'Will add {ip}')
             # Change this to type : "Domain" for a domain indicator etc.
             new_indicators.append({ 'indicator': ip, 'type': 'IPv4' })
         else:
-            print('Wont add ' + ip)
+            print(f'Wont add {ip}')
 
 print('Updating indicators')
 response = otx.replace_pulse_indicators(pulse_id, new_indicators)

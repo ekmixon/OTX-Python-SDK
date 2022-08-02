@@ -70,4 +70,4 @@ for tag in j['Event']['Tag']:
 
 response = otx.create_pulse(name=title, indicators=indicator_list, references=reference_list, tlp=tlp, description="Pulse imported from MISP", tags = tags)
 
-print ("Made pulse with response: " + str(response))
+print(f"Made pulse with response: {str(response)}")

@@ -22,4 +22,4 @@ print('Updating indicators for pulse:')
 with open('updatePulse.json') as data_file:
     data = json.load(data_file)
     response = otx.replace_pulse_indicators(pulse_id, data)
-    print('Response: ' + str(response))
+    print(f'Response: {str(response)}')

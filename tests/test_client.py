@@ -29,20 +29,46 @@ def create_user(username, password, email, group_ids=None):
     """
     Create a user, and get the API key
     """
-    requests.post(ALIEN_DEV_SERVER + 'otxapi/qatests/setup/', json={"users": [
-        {"username": username, "password": password, "email": email, "group_ids": group_ids}
-    ]})
-    r = requests.post(ALIEN_DEV_SERVER + 'auth/login', json={"username": username, "password": password})
+    requests.post(
+        f'{ALIEN_DEV_SERVER}otxapi/qatests/setup/',
+        json={
+            "users": [
+                {
+                    "username": username,
+                    "password": password,
+                    "email": email,
+                    "group_ids": group_ids,
+                }
+            ]
+        },
+    )
+
+    r = requests.post(
+        f'{ALIEN_DEV_SERVER}auth/login',
+        json={"username": username, "password": password},
+    )
+
     j = json.loads(r.text)
-    r = requests.get(ALIEN_DEV_SERVER + 'otxapi/user/?detailed=true', headers={'Authorization': j['key']})
+    r = requests.get(
+        f'{ALIEN_DEV_SERVER}otxapi/user/?detailed=true',
+        headers={'Authorization': j['key']},
+    )
+
     j = r.json()
-    print("creating user {} (key={} groups={})".format(username, j['api_keys'][0]['api_key'],  group_ids))
+    print(
+        f"creating user {username} (key={j['api_keys'][0]['api_key']} groups={group_ids})"
+    )
+
     return j['api_keys'][0]['api_key']
 
 
 def delete_user(username):
-    print("deleting user {}".format(username))
-    r = requests.post(ALIEN_DEV_SERVER + 'otxapi/qatests/cleanup/', json={"users": [username]})
+    print(f"deleting user {username}")
+    r = requests.post(
+        f'{ALIEN_DEV_SERVER}otxapi/qatests/cleanup/',
+        json={"users": [username]},
+    )
+
     return r.json()
 
 
@@ -340,14 +366,23 @@ class TestPulseCreate(TestOTXv2):
 
     @classmethod
     def setUpClass(cls):
-        cls.otx2 = OTXv2(create_user(cls.user1, "password", cls.user1 + "@aveng.us", group_ids=[51, 64, 2931]), server=ALIEN_DEV_SERVER)
+        cls.otx2 = OTXv2(
+            create_user(
+                cls.user1,
+                "password",
+                f"{cls.user1}@aveng.us",
+                group_ids=[51, 64, 2931],
+            ),
+            server=ALIEN_DEV_SERVER,
+        )
 
     @classmethod
     def tearDownClass(cls):
         delete_user(cls.user1)
 
     def test_create_pulse_simple(self):
-        name = "Pyclient-simple-unittests-" + generate_rand_string(8, charset=string.hexdigits).lower()
+        name = f"Pyclient-simple-unittests-{generate_rand_string(8, charset=string.hexdigits).lower()}"
+
         # print("test_create_pulse_simple submitting pulse: " + name)
         response = self.otx.create_pulse(name=name,
                                          public=False,
@@ -391,18 +426,44 @@ class TestPulseCreate(TestOTXv2):
         charset = string.ascii_letters
         validated_indicator_list = []
         indicator_list = [
-            {'indicator': generate_rand_string(10, charset=charset) + ".com", 'type': IndicatorTypes.DOMAIN},
-            {'indicator': generate_rand_string(3, charset=charset) + "." + generate_rand_string(10, charset=charset) + ".com", 'type': IndicatorTypes.HOSTNAME},
+            {
+                'indicator': f"{generate_rand_string(10, charset=charset)}.com",
+                'type': IndicatorTypes.DOMAIN,
+            },
+            {
+                'indicator': f"{generate_rand_string(3, charset=charset)}.{generate_rand_string(10, charset=charset)}.com",
+                'type': IndicatorTypes.HOSTNAME,
+            },
             {'indicator': "69.73.130.198", 'type': IndicatorTypes.IPv4},
             {'indicator': "2a00:1450:4001:800::1017", 'type': IndicatorTypes.IPv6},
-            {'indicator': "spearphish@" + generate_rand_string(10) + ".com", 'type': IndicatorTypes.EMAIL},
-            {'indicator': "14c04f88dc97aef3e9b516ef208a2bf5", 'type': IndicatorTypes.FILE_HASH_MD5},
-            {'indicator': "48e04cb52f1077b5f5aab75baff6c27b0ee4ade1", 'type': IndicatorTypes.FILE_HASH_SHA1},
-            {'indicator': "7522bc3e366c19ab63381bacd0f03eb09980ecb915ada08ae76d8c3e538600de", 'type': IndicatorTypes.FILE_HASH_SHA256},
-            {'indicator': "a060fe925aa888053010d1e195ef823a", 'type': IndicatorTypes.FILE_HASH_IMPHASH},
-            {'indicator': "\sonas\share\samples\14\c0\4f\88\14c04f88dc97aef3e9b516ef208a2bf5", 'type': IndicatorTypes.FILE_PATH},
+            {
+                'indicator': f"spearphish@{generate_rand_string(10)}.com",
+                'type': IndicatorTypes.EMAIL,
+            },
+            {
+                'indicator': "14c04f88dc97aef3e9b516ef208a2bf5",
+                'type': IndicatorTypes.FILE_HASH_MD5,
+            },
+            {
+                'indicator': "48e04cb52f1077b5f5aab75baff6c27b0ee4ade1",
+                'type': IndicatorTypes.FILE_HASH_SHA1,
+            },
+            {
+                'indicator': "7522bc3e366c19ab63381bacd0f03eb09980ecb915ada08ae76d8c3e538600de",
+                'type': IndicatorTypes.FILE_HASH_SHA256,
+            },
+            {
+                'indicator': "a060fe925aa888053010d1e195ef823a",
+                'type': IndicatorTypes.FILE_HASH_IMPHASH,
+            },
+            {
+                'indicator': "\sonas\share\samples\14\c0\4f\88\14c04f88dc97aef3e9b516ef208a2bf5",
+                'type': IndicatorTypes.FILE_PATH,
+            },
         ]
-        name = "Pyclient-indicators-unittests-" + generate_rand_string(8, charset=string.hexdigits).lower()
+
+        name = f"Pyclient-indicators-unittests-{generate_rand_string(8, charset=string.hexdigits).lower()}"
+
         for indicator in indicator_list:
             validated_indicator = self.otx.validate_indicator(indicator.get('type'), indicator.get('indicator', ''))
             self.assertTrue('success' in validated_indicator.get('status', ''))
@@ -685,10 +746,20 @@ class TestPulseCreate(TestOTXv2):
         """
         charset = string.ascii_letters
         indicator_list = [
-            {'indicator': generate_rand_string(10, charset=charset) + ".com", 'type': IndicatorTypes.DOMAIN.name, 'description': 'evil domain (unittests)'},
-            {'indicator': generate_rand_string(3, charset=charset) + "." + generate_rand_string(10, charset=charset) + ".com", 'type': IndicatorTypes.HOSTNAME.name, 'description': 'evil hostname (unittests)'}
+            {
+                'indicator': f"{generate_rand_string(10, charset=charset)}.com",
+                'type': IndicatorTypes.DOMAIN.name,
+                'description': 'evil domain (unittests)',
+            },
+            {
+                'indicator': f"{generate_rand_string(3, charset=charset)}.{generate_rand_string(10, charset=charset)}.com",
+                'type': IndicatorTypes.HOSTNAME.name,
+                'description': 'evil hostname (unittests)',
+            },
         ]
-        name = "Pyclient-tlp-unittests-" + generate_rand_string(8, charset=string.hexdigits).lower()
+
+        name = f"Pyclient-tlp-unittests-{generate_rand_string(8, charset=string.hexdigits).lower()}"
+
         tlps = ['red', 'amber', 'green', 'white']
         for tlp in tlps:
             # print("test_create_pulse_tlp: submitting pulse: {}".format({"name": name, "tlp": tlp}))
@@ -706,9 +777,18 @@ class TestPulseCreate(TestOTXv2):
 
         charset = string.ascii_letters
         indicator_list = [
-            {'indicator': generate_rand_string(10, charset=charset) + ".com", 'type': IndicatorTypes.DOMAIN.name, 'description': 'evil domain (unittests)'},
-            {'indicator': generate_rand_string(3, charset=charset) + "." + generate_rand_string(10, charset=charset) + ".com", 'type': IndicatorTypes.HOSTNAME.name, 'description': 'evil hostname (unittests)'}
+            {
+                'indicator': f"{generate_rand_string(10, charset=charset)}.com",
+                'type': IndicatorTypes.DOMAIN.name,
+                'description': 'evil domain (unittests)',
+            },
+            {
+                'indicator': f"{generate_rand_string(3, charset=charset)}.{generate_rand_string(10, charset=charset)}.com",
+                'type': IndicatorTypes.HOSTNAME.name,
+                'description': 'evil hostname (unittests)',
+            },
         ]
+
 
         for groups, expected in [
             ([], []),
@@ -719,7 +799,8 @@ class TestPulseCreate(TestOTXv2):
             ([51], [51]),
             ([51, 2931], [51, 2931]),
         ]:
-            name = "Pyclient-tlp-unittests-" + generate_rand_string(8, charset=string.hexdigits).lower()
+            name = f"Pyclient-tlp-unittests-{generate_rand_string(8, charset=string.hexdigits).lower()}"
+
             if expected == 'error':
                 with self.assertRaises(BadRequest):
                     self.otx2.create_pulse(name=name, indicators=indicator_list, group_ids=groups)
@@ -731,16 +812,21 @@ class TestPulseCreate(TestOTXv2):
 
     def test_more_params(self):
         response = self.otx.create_pulse(
-            name="Pyclient-params-unittests-" + generate_rand_string(8, charset=string.hexdigits).lower(),
-            indicators= [
-                {'indicator': generate_rand_string(10) + ".com", 'type': IndicatorTypes.DOMAIN.name, 'description': 'evil domain (unittests)'},
-            ],   
+            name=f"Pyclient-params-unittests-{generate_rand_string(8, charset=string.hexdigits).lower()}",
+            indicators=[
+                {
+                    'indicator': f"{generate_rand_string(10)}.com",
+                    'type': IndicatorTypes.DOMAIN.name,
+                    'description': 'evil domain (unittests)',
+                }
+            ],
             industries=["Industry1", "Industry2"],
             targeted_countries=["Afghanistan", "Anguilla"],
             malware_families=["Backdoor:Linux/Netbus", "Backdoor:Linux/Cyrax"],
             attack_ids=["T1001", "T1002"],
             adversary="APT 1",
         )
+
 
         check_fields = ['industries', 'targeted_countries', 'malware_families', 'attack_ids', 'adversary', 'group_ids']
         self.assertEqual({k: response[k] for k in check_fields}, {
@@ -764,7 +850,7 @@ class TestPulseCreate(TestOTXv2):
         name = "Pyclient-indicators-unittests-clone-pulse"
         response = self.otx.create_pulse(name=name, public=True, indicators=indicator_list)
         pulse_id = response['id']
-        print("pulse_id={}".format(pulse_id))
+        print(f"pulse_id={pulse_id}")
 
         r = self.otx.clone_pulse(pulse_id, new_name='Cloned pulse')
         new_id = r.pop('id')
@@ -815,7 +901,8 @@ class TestPulseCreateInvalidKey(TestOTXv2):
         super(TestPulseCreateInvalidKey, self).setUp(**{'api_key': "ALIEN_API_APIKEY"})
 
     def test_create_pulse_invalid_key(self):
-        name = "Pyclient-unittests-" + generate_rand_string(8, charset=string.hexdigits).lower()
+        name = f"Pyclient-unittests-{generate_rand_string(8, charset=string.hexdigits).lower()}"
+
         # print("test_create_pulse_simple submitting pulse: " + name)
         with self.assertRaises(InvalidAPIKey):
             self.otx.create_pulse(name=name,
@@ -833,7 +920,10 @@ class TestSubscription(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         for u in [cls.user1, cls.user2]:
-            cls.otx[u] = OTXv2(create_user(u, "password", u + "@aveng.us"), server=ALIEN_DEV_SERVER)
+            cls.otx[u] = OTXv2(
+                create_user(u, "password", f"{u}@aveng.us"),
+                server=ALIEN_DEV_SERVER,
+            )
 
     @classmethod
     def tearDownClass(cls):
@@ -914,7 +1004,10 @@ class TestSubscription(unittest.TestCase):
 
 class TestValidateIndicator(TestOTXv2):
     def test_validate_valid_domain(self):
-        indicator = generate_rand_string(8, charset=string.ascii_letters).lower() + ".com"
+        indicator = (
+            f"{generate_rand_string(8, charset=string.ascii_letters).lower()}.com"
+        )
+
         indicator_type = IndicatorTypes.DOMAIN
         # print("test_validate_valid_domain submitting (valid-ish) indicator: " + indicator)
         response = self.otx.validate_indicator(indicator_type=indicator_type, indicator=indicator)
@@ -957,13 +1050,13 @@ class TestSubmissions(TestOTXv2):
         cls.rand2 = random.randint(0, 1e12)
 
     def test_submit_file(self):
-        data = "print('{} {}')".format(self.rand1, self.rand2)
+        data = f"print('{self.rand1} {self.rand2}')"
         try:
             contents = bytes(data, encoding='utf8')
         except TypeError:
             contents = bytes(data)
 
-        filename = 'test{}.py'.format(self.rand1)
+        filename = f'test{self.rand1}.py'
         r = self.otx.submit_file(filename=filename, file_handle=io.BytesIO(contents))
         self.assertDictEqual(r, {
             u'result': u'added',
@@ -976,7 +1069,7 @@ class TestSubmissions(TestOTXv2):
 
     def test_submit_url(self):
         time.sleep(2)
-        u = "http://flannelcat.rustybrooks.com/xxx/{}".format(self.rand1)
+        u = f"http://flannelcat.rustybrooks.com/xxx/{self.rand1}"
         r = self.otx.submit_url(url=u)
         self.assertDictEqual(r, {u'result': u'added', u'status': u'ok'})
 
@@ -985,8 +1078,8 @@ class TestSubmissions(TestOTXv2):
 
     def test_submit_urls(self):
         time.sleep(2)
-        u1 = "http://flannelcat.rustybrooks.com/yyy/{}".format(self.rand1)
-        u2 = "http://flannelcat.rustybrooks.com/yyy/{}".format(self.rand2)
+        u1 = f"http://flannelcat.rustybrooks.com/yyy/{self.rand1}"
+        u2 = f"http://flannelcat.rustybrooks.com/yyy/{self.rand2}"
         r = self.otx.submit_urls(urls=[u1, u2])
         r['added'].sort()
         self.assertDictEqual(r, {
@@ -1016,7 +1109,7 @@ class TestOTXv2Cached(unittest.TestCase):
 
         for u in [cls.user, cls.author1, cls.author2]:
             cls.otx[u] = OTXv2Cached(
-                create_user(u, "password", u + "@aveng.us"),
+                create_user(u, "password", f"{u}@aveng.us"),
                 cache_dir=tempfile.mkdtemp(),
                 server=ALIEN_DEV_SERVER,
             )
@@ -1140,10 +1233,10 @@ class TestOTXv2Cached(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    username = "qatester-git-{}".format(rand)
+    username = f"qatester-git-{rand}"
 
     try:
-        ALIEN_API_APIKEY = create_user(username, "password", username + "@aveng.us")
+        ALIEN_API_APIKEY = create_user(username, "password", f"{username}@aveng.us")
         unittest.main()
     finally:
         print(delete_user(username))

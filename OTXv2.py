@@ -22,32 +22,32 @@ import IndicatorTypes
 
 # API URLs
 API_V1_ROOT = "/api/v1"                                                       # API v1 base path
-SUBSCRIBED = "{}/pulses/subscribed".format(API_V1_ROOT)                       # pulse subscriptions
-EVENTS = "{}/pulses/events".format(API_V1_ROOT)                               # events (user actions)
-SEARCH_PULSES = "{}/search/pulses".format(API_V1_ROOT)                        # search pulses
-SEARCH_USERS = "{}/search/users".format(API_V1_ROOT)                          # search users
-PULSE_DETAILS = "{}/pulses/".format(API_V1_ROOT)                              # pulse meta data
-PULSE_INDICATORS = PULSE_DETAILS + "indicators"                               # pulse indicators
-PULSE_CREATE = "{}/pulses/create".format(API_V1_ROOT)                         # create pulse
+SUBSCRIBED = f"{API_V1_ROOT}/pulses/subscribed"
+EVENTS = f"{API_V1_ROOT}/pulses/events"
+SEARCH_PULSES = f"{API_V1_ROOT}/search/pulses"
+SEARCH_USERS = f"{API_V1_ROOT}/search/users"
+PULSE_DETAILS = f"{API_V1_ROOT}/pulses/"
+PULSE_INDICATORS = f"{PULSE_DETAILS}indicators"
+PULSE_CREATE = f"{API_V1_ROOT}/pulses/create"
 PULSE_ADD_GROUP = "{}/groups/{{}}/add_pulse?pulse_id={{}}".format(API_V1_ROOT)
 PULSE_REMOVE_GROUP = "{}/groups/{{}}/remove_pulse?pulse_id={{}}".format(API_V1_ROOT)
 USER_PULSES = "{}/pulses/user/{{}}".format(API_V1_ROOT)                       # pulse feed for a user
-MY_PULSES = "{}/pulses/my".format(API_V1_ROOT)                       # pulse feed for a user
+MY_PULSES = f"{API_V1_ROOT}/pulses/my"
 SUBSCRIBE_PULSE = "{}/pulses/{{}}/subscribe".format(API_V1_ROOT)              # subscribe to pulse
 CLONE_PULSE = "{}/pulses/{{}}/clone".format(API_V1_ROOT)            # clone pulse
 UNSUBSCRIBE_PULSE = "{}/pulses/{{}}/unsubscribe".format(API_V1_ROOT)          # unsubscribe from pulse
-INDICATOR_DETAILS = "{}/indicators/".format(API_V1_ROOT)                      # indicator details
-VALIDATE_INDICATOR = "{}/pulses/indicators/validate".format(API_V1_ROOT)      # indicator details
+INDICATOR_DETAILS = f"{API_V1_ROOT}/indicators/"
+VALIDATE_INDICATOR = f"{API_V1_ROOT}/pulses/indicators/validate"
 SUBSCRIBE_USER = "{}/users/{{}}/subscribe/".format(API_V1_ROOT)               # subscribe to user
 UNSUBSCRIBE_USER = "{}/users/{{}}/unsubscribe/".format(API_V1_ROOT)           # unsubscribe from user
 FOLLOW_USER = "{}/users/{{}}/follow".format(API_V1_ROOT)                      # follow user
 USER_INFO = "{}/users/{{}}".format(API_V1_ROOT)                               # follow user
 UNFOLLOW_USER = "{}/users/{{}}/unfollow".format(API_V1_ROOT)                  # unfollow user
-SUBMIT_FILE = "{}/indicators/submit_file".format(API_V1_ROOT)                 # submit malware sample for analysis
-SUBMITTED_FILES = "{}/indicators/submitted_files".format(API_V1_ROOT)         # status of submitted samples
-SUBMIT_URL = "{}/indicators/submit_url".format(API_V1_ROOT)                   # submit url for analysis
-SUBMIT_URLS = "{}/indicators/submit_urls".format(API_V1_ROOT)                 # submit multiple urls for analysis
-SUBMITTED_URLS = "{}/indicators/submitted_urls".format(API_V1_ROOT)           # status of submitted urls
+SUBMIT_FILE = f"{API_V1_ROOT}/indicators/submit_file"
+SUBMITTED_FILES = f"{API_V1_ROOT}/indicators/submitted_files"
+SUBMIT_URL = f"{API_V1_ROOT}/indicators/submit_url"
+SUBMIT_URLS = f"{API_V1_ROOT}/indicators/submit_urls"
+SUBMITTED_URLS = f"{API_V1_ROOT}/indicators/submitted_urls"
 DELETE_PULSE = "{}/pulses/{{}}/delete".format(API_V1_ROOT)                   # Delete a pulse
 
 
@@ -111,8 +111,8 @@ class OTXv2(object):
         self.request_session = None
         self.headers = {
             'X-OTX-API-KEY': self.key,
-            'User-Agent': user_agent or 'OTX Python {}/1.5.12'.format(project),
-            'Content-Type': 'application/json'
+            'User-Agent': user_agent or f'OTX Python {project}/1.5.12',
+            'Content-Type': 'application/json',
         }
 
     def session(self):
@@ -311,15 +311,14 @@ class OTXv2(object):
         if isinstance(indicator_type, IndicatorTypes.IndicatorTypes):
             indicator_type = indicator_type.name
         elif indicator_type not in IndicatorTypes.to_name_list(IndicatorTypes.all_types):
-            raise ValueError("Indicator type: {} is not a valid type.".format(indicator_type))
+            raise ValueError(f"Indicator type: {indicator_type} is not a valid type.")
         # indicator type is valid, let's valdate against the otx api
         body = {
             'indicator': indicator,
             'type': indicator_type,
             'description': description
         }
-        response = self.post(self.create_url(VALIDATE_INDICATOR), body=body)
-        return response
+        return self.post(self.create_url(VALIDATE_INDICATOR), body=body)
 
     def create_url(self, url_path, **kwargs):
         """ Turn a path into a valid fully formatted URL. Supports query parameter formatting as well.
@@ -331,7 +330,7 @@ class OTXv2(object):
         uri = url_path.format(self.server)
         uri = uri if uri.startswith("http") else self.server.rstrip('/') + uri
         if kwargs:
-            uri += "?" + urlencode(kwargs)
+            uri += f"?{urlencode(kwargs)}"
 
         return uri
 
@@ -367,7 +366,7 @@ class OTXv2(object):
             elif method == 'POST':
                 data = self.post(next_page_url, body=body)
             else:
-                raise Exception("Unsupported method type: {}".format(method))
+                raise Exception(f"Unsupported method type: {method}")
 
             for el in data['results']:
                 item_count += 1
@@ -472,14 +471,13 @@ class OTXv2(object):
         additional_fields = {}
         while next_page_url and len(results) < max_results:
             json_data = self.get(next_page_url)
-            for r in json_data.pop("results"):
-                results.append(r)
+            results.extend(iter(json_data.pop("results")))
             next_page_url = json_data.pop("next")
             json_data.pop('previous', '')
             if json_data.items():
-                additional_fields.update(json_data)
+                additional_fields |= json_data
         resource = {"results": results[:max_results]}
-        resource.update(additional_fields)
+        resource |= additional_fields
         return resource
 
     def get_all_indicators(self, author_name=None, modified_since=None, indicator_types=IndicatorTypes.all_types, limit=50, max_page=None, max_items=None):
@@ -523,8 +521,7 @@ class OTXv2(object):
            raise BadRequest("pulse_id should be a 24 character hex string")
 
         pulse_url = self.create_url(PULSE_DETAILS + str(pulse_id))
-        meta_data = self.get(pulse_url)
-        return meta_data
+        return self.get(pulse_url)
 
     def delete_pulse(self, pulse_id):
         """
@@ -561,8 +558,7 @@ class OTXv2(object):
         }
         :return: Return the new pulse
         """
-        response = self.patch(self.create_url(PULSE_DETAILS + str(pulse_id)), body=body)
-        return response
+        return self.patch(self.create_url(PULSE_DETAILS + str(pulse_id)), body=body)
 
     def add_pulse_indicators(self, pulse_id, new_indicators):
         """
@@ -572,12 +568,9 @@ class OTXv2(object):
         :return: The updated pulse
         """
 
-        response = self.edit_pulse(pulse_id, body={
-            'indicators': {
-                'add': new_indicators
-            }
-        })
-        return response
+        return self.edit_pulse(
+            pulse_id, body={'indicators': {'add': new_indicators}}
+        )
 
     def add_or_update_pulse_indicators(self, pulse_id, indicators):
         """
@@ -597,9 +590,12 @@ class OTXv2(object):
             if indicator['indicator'] in current_indicators:
                 indicator = copy.deepcopy(indicator)
                 indicator['id'] = current_indicators[indicator['indicator']]['id']
-                if 'expiration' in indicator and 'is_active' not in indicator:
-                    if self.fix_date(indicator['expiration']) > self.now():
-                        indicator['is_active'] = 1
+                if (
+                    'expiration' in indicator
+                    and 'is_active' not in indicator
+                    and self.fix_date(indicator['expiration']) > self.now()
+                ):
+                    indicator['is_active'] = 1
                 indicators_to_update.append(indicator)
             else:
                 indicators_to_add.append(indicator)
@@ -610,8 +606,7 @@ class OTXv2(object):
                 'edit': indicators_to_update,
             }
         }
-        response = self.patch(self.create_url(PULSE_DETAILS + str(pulse_id)), body=body)
-        return response
+        return self.patch(self.create_url(PULSE_DETAILS + str(pulse_id)), body=body)
 
     def replace_pulse_indicators(self, pulse_id, new_indicators):
         """
@@ -640,13 +635,14 @@ class OTXv2(object):
                 indicators_to_amend.append(indicator)
                 del current_indicators[indicator['indicator']]
 
-        for indicator in current_indicators.values():
-            indicators_to_amend.append({"id": indicator["id"], "expiration": expire_date, "title": "Expired"})
+        indicators_to_amend.extend(
+            {"id": indicator["id"], "expiration": expire_date, "title": "Expired"}
+            for indicator in current_indicators.values()
+        )
 
         body = {'indicators': {'add': indicators_to_add, 'edit': indicators_to_amend}}
 
-        response = self.patch(self.create_url(PULSE_DETAILS + str(pulse_id)), body=body)
-        return response
+        return self.patch(self.create_url(PULSE_DETAILS + str(pulse_id)), body=body)
 
     def remove_pulse_indicators(self, pulse_id, indicator_ids):
         body = {'indicators': {'remove': [{'id': i} for i in indicator_ids]}}
@@ -666,8 +662,7 @@ class OTXv2(object):
         if section not in indicator_type.sections:
             raise TypeError("Section {0} is not currently supported for indicator type: {0}")
         indicator_url = self.create_indicator_detail_url(indicator_type, indicator, section)
-        indicator_details = self.get(indicator_url)
-        return indicator_details
+        return self.get(indicator_url)
 
     def get_indicator_details_full(self, indicator_type, indicator):
         """
@@ -922,7 +917,7 @@ class OTXv2Cached(OTXv2):
         return pulse_dir
 
     def pulse_file(self, pulse_id, create=False):
-        pulse_file = pulse_id + '.json'
+        pulse_file = f'{pulse_id}.json'
         return os.path.join(self.pulse_cache_dir(pulse_id, create=create), pulse_file)
 
     def save_pulse(self, p):
@@ -946,7 +941,7 @@ class OTXv2Cached(OTXv2):
         return p
 
     def find_pulses(self, return_type='pulse_id', author_names=None, modified_since=None):
-        author_names = set([x.lower() for x in author_names]) if author_names else None
+        author_names = {x.lower() for x in author_names} if author_names else None
         modified_since = self.fix_date(modified_since)
 
         for dirName, subdirList, fileList in os.walk(self.cache_dir):
@@ -959,13 +954,17 @@ class OTXv2Cached(OTXv2):
                 if author_names or modified_since or return_type == 'pulse':
                     pulse = self.load_pulse(pulse_id)
 
-                if author_names:
-                    if pulse['author_name'].lower() not in author_names:
-                        continue
+                if (
+                    author_names
+                    and pulse['author_name'].lower() not in author_names
+                ):
+                    continue
 
-                if modified_since:
-                    if self.fix_date(pulse['modified']) < modified_since:
-                        continue
+                if (
+                    modified_since
+                    and self.fix_date(pulse['modified']) < modified_since
+                ):
+                    continue
 
                 if return_type == 'pulse_id':
                     yield pulse_id

@@ -31,7 +31,7 @@ class PulseManager(object):
         self.otx = OTXv2(API_KEY, server=OTX_SERVER)
 
     def pulse_name(self, malware_name):
-        return "{} - Malware Domain Feed".format(malware_name)
+        return f"{malware_name} - Malware Domain Feed"
 
     def indicators(self, domains):
         return [{'indicator': domain, 'type': 'hostname', 'title': 'Command and Control'} for domain in domains]
@@ -45,10 +45,9 @@ class PulseManager(object):
             while retries <= 5:
                 try:
                     retries += 1
-                    log.info('Looking for pulse: ' + malware_name)
-                    query='name:"{}"'.format(self.pulse_name(malware_name))
-                    pulses = self.otx.get_my_pulses(query=query)
-                    if pulses:
+                    log.info(f'Looking for pulse: {malware_name}')
+                    query = f'name:"{self.pulse_name(malware_name)}"'
+                    if pulses := self.otx.get_my_pulses(query=query):
                         return pulses[0]['id']
                     else:
                         return None
@@ -68,7 +67,10 @@ class PulseManager(object):
 
     def create_pulse_request(self, malware_name, domains):
         try:
-            description = "Command and Control domains for malware known as " + malware_name
+            description = (
+                f"Command and Control domains for malware known as {malware_name}"
+            )
+
             self.otx.create_pulse(
                 name=self.pulse_name(malware_name), public=True, tlp="white", description=description,
                 indicators=self.indicators(domains),
@@ -89,13 +91,12 @@ class PulseManager(object):
         if not domains:
             return
 
-        pulse_id = self.find_pulse(malware_name)
-        if not pulse_id:
-            log.info('Making pulse, doesnt exist')
-            self.create_pulse_request(malware_name, domains)
-        else:
+        if pulse_id := self.find_pulse(malware_name):
             log.info('Updating pulse, already exists')
             self.modify_pulse_request(pulse_id, domains)
+        else:
+            log.info('Making pulse, doesnt exist')
+            self.create_pulse_request(malware_name, domains)
 
 
 if __name__ == '__main__':
